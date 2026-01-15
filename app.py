@@ -12,6 +12,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Performance optimization: cache expensive operations
+@st.cache_data
+def get_default_periods():
+    """Generate default periods (cached for performance)"""
+    default_periods = []
+    start_time = datetime.strptime("7:30 AM", "%I:%M %p")
+    for i in range(8):
+        end_time = start_time + timedelta(minutes=45)
+        period_name = f"Period {i+1}"
+        time_range = f"{start_time.strftime('%I:%M %p')} - {end_time.strftime('%I:%M %p')}"
+        default_periods.append({
+            'name': period_name,
+            'time_range': time_range,
+            'start': start_time.strftime('%I:%M %p'),
+            'end': end_time.strftime('%I:%M %p')
+        })
+        start_time = end_time
+    return default_periods
+
 # Custom CSS for printable style
 st.markdown("""
 <style>
@@ -71,21 +90,8 @@ def init_session_state():
         st.session_state.closing_time = "3:00 PM"
     
     if 'periods' not in st.session_state:
-        # Default: 8 periods starting at 7:30 AM, 45 minutes each
-        default_periods = []
-        start_time = datetime.strptime("7:30 AM", "%I:%M %p")
-        for i in range(8):
-            end_time = start_time + timedelta(minutes=45)
-            period_name = f"Period {i+1}"
-            time_range = f"{start_time.strftime('%I:%M %p')} - {end_time.strftime('%I:%M %p')}"
-            default_periods.append({
-                'name': period_name,
-                'time_range': time_range,
-                'start': start_time.strftime('%I:%M %p'),
-                'end': end_time.strftime('%I:%M %p')
-            })
-            start_time = end_time
-        st.session_state.periods = default_periods
+        # Default: 8 periods starting at 7:30 AM, 45 minutes each (using cached function)
+        st.session_state.periods = get_default_periods()
     
     if 'subjects' not in st.session_state:
         st.session_state.subjects = {
@@ -196,7 +202,7 @@ def export_to_json():
 
 # Main app
 st.title("📅 Ghana School Timetable Generator")
-st.markdown("**By Samuel Nhyira**")
+st.markdown("**By Samuel Nhyira Cann**")
 st.markdown("---")
 
 # Tabs
